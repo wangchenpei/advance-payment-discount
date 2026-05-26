@@ -1,26 +1,3 @@
-/** 解析利率字符串：支持 5%、0.05、逗号/空格/换行分隔 */
-export function parseRates(input: string): number[] {
-  const raw = input
-    .split(/[\s,;，；]+/u)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const rates: number[] = [];
-  for (const token of raw) {
-    let v: number;
-    if (token.endsWith("%")) {
-      v = Number(token.slice(0, -1)) / 100;
-    } else {
-      v = Number(token);
-    }
-    if (!Number.isFinite(v)) {
-      throw new Error(`无法解析利率：「${token}」`);
-    }
-    rates.push(v);
-  }
-  return rates;
-}
-
 /**
  * 名义总保费 total，分 n 年等额缴，每期 P = total/n。
  * 第 0 时刻从实缴 X 扣 P，余额按 r[0] 滚一年再扣 P，… 共 n-1 个利率；
@@ -96,6 +73,135 @@ function formatMoney(n: number): string {
 
 const el = (id: string) => document.getElementById(id)!;
 
+/** 名义保费：仅保留数字，千位逗号展示（整数元） */
+function parseDigitsOnly(s: string): string {
+  return s.replace(/\D/g, "");
+}
+
+function formatIntegerCommas(digits: string): string {
+  if (!digits) return "";
+  const noLeadingZeros = digits.replace(/^0+(?=\d)/u, "");
+  const core = noLeadingZeros || "0";
+  return core.replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
+}
+
+function digitsBeforeCaret(formatted: string, caret: number): number {
+  let n = 0;
+  for (let i = 0; i < Math.min(caret, formatted.length); i++) {
+    if (/\d/u.test(formatted[i])) n++;
+  }
+  return n;
+}
+
+function caretAfterDigits(formatted: string, digitCount: number): number {
+  if (digitCount <= 0) return 0;
+  let n = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/u.test(formatted[i])) {
+      n++;
+      if (n === digitCount) return i + 1;
+    }
+  }
+  return formatted.length;
+}
+
+function parseNominalInput(value: string): number {
+  const digits = parseDigitsOnly(value);
+  if (!digits) return NaN;
+  return Number(digits);
+}
+
+function formatPercentDisplay(r: number): string {
+  const p = r * 100;
+  const s = p.toLocaleString("zh-CN", { maximumFractionDigits: 6 });
+  return `${s}%`;
+}
+
+function formatRatesSummary(rates: number[]): string {
+  if (rates.length === 0) return "无需计息期";
+  return rates.map((r, i) => `第 ${i + 1} 年 ${formatPercentDisplay(r)}`).join(" · ");
+}
+
+function adjustRatesLength(years: number, prev: number[]): number[] {
+  const need = Math.max(0, years - 1);
+  if (need === 0) return [];
+  const next = prev.slice(0, need);
+  while (next.length < need) {
+    const pad = next.length > 0 ? next[next.length - 1] : 0.05;
+    next.push(pad);
+  }
+  return next;
+}
+
+let ratesDecimal: number[] = [0.05, 0.04, 0.03, 0.02];
+
+function syncRatesUi(): void {
+  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
+  ratesDecimal = adjustRatesLength(years, ratesDecimal);
+
+  const need = Math.max(0, years - 1);
+  (el("ratesCountHint") as HTMLElement).textContent = String(need);
+
+  const summary = el("ratesSummary") as HTMLElement;
+  const openBtn = el("openRatesModal") as HTMLButtonElement;
+  if (years <= 1) {
+    summary.textContent = "分 1 年交：无中间计息期，无需填写利率。";
+    openBtn.disabled = true;
+  } else {
+    summary.textContent = formatRatesSummary(ratesDecimal);
+    openBtn.disabled = false;
+  }
+}
+
+function buildRatesDialogFields(): void {
+  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
+  const need = Math.max(0, years - 1);
+  const container = el("ratesDialogFields") as HTMLElement;
+  container.innerHTML = "";
+
+  (el("ratesDialogHint") as HTMLElement).textContent =
+    need === 0
+      ? "当前年数为 1，无计息期。"
+      : `分期年数为 ${years}：请填写第 1 至第 ${need} 个计息年度的年化利率（数字即可，单位为 %）。`;
+
+  for (let i = 0; i < need; i++) {
+    const wrap = document.createElement("div");
+    wrap.className = "rateField";
+    const label = document.createElement("label");
+    label.htmlFor = `ratePct_${i}`;
+    label.textContent = `第 ${i + 1} 计息年度利率（%）`;
+    const input = document.createElement("input");
+    input.id = `ratePct_${i}`;
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    const r = ratesDecimal[i] ?? 0;
+    input.value = Number.isFinite(r) ? String(r * 100) : "";
+    wrap.append(label, input);
+    container.appendChild(wrap);
+  }
+}
+
+function readRatesFromDialog(): number[] {
+  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
+  const need = Math.max(0, years - 1);
+  const out: number[] = [];
+  for (let i = 0; i < need; i++) {
+    const input = document.getElementById(`ratePct_${i}`) as HTMLInputElement | null;
+    const raw = (input?.value ?? "").trim().replace(/%/u, "");
+    if (!raw) {
+      throw new Error(`请填写第 ${i + 1} 计息年度的利率（%）`);
+    }
+    const pct = Number(raw);
+    if (!Number.isFinite(pct) || pct <= -100) {
+      throw new Error(`第 ${i + 1} 个利率无效：${input?.value ?? ""}`);
+    }
+    out.push(pct / 100);
+  }
+  return out;
+}
+
 function run(): void {
   const err = el("error") as HTMLElement;
   const res = el("result") as HTMLElement;
@@ -104,9 +210,12 @@ function run(): void {
   err.textContent = "";
 
   try {
-    const nominal = Number((el("nominal") as HTMLInputElement).value);
+    const nominal = parseNominalInput((el("nominal") as HTMLInputElement).value);
+    if (!Number.isFinite(nominal)) {
+      throw new Error("请填写总名义保费（元），仅输入数字即可");
+    }
     const years = Math.round(Number((el("years") as HTMLInputElement).value));
-    const rates = parseRates((el("rates") as HTMLTextAreaElement).value);
+    const rates = ratesDecimal;
 
     const X = solveLumpSum(nominal, years, rates);
     const P = nominal / years;
@@ -139,5 +248,57 @@ function run(): void {
   }
 }
 
+function wireNominalThousands(): void {
+  const nominalInput = el("nominal") as HTMLInputElement;
+  nominalInput.addEventListener("input", () => {
+    const caret = nominalInput.selectionStart ?? nominalInput.value.length;
+    const digitCount = digitsBeforeCaret(nominalInput.value, caret);
+    const raw = parseDigitsOnly(nominalInput.value);
+    const formatted = formatIntegerCommas(raw);
+    nominalInput.value = formatted;
+    const newCaret = caretAfterDigits(formatted, digitCount);
+    requestAnimationFrame(() => {
+      nominalInput.setSelectionRange(newCaret, newCaret);
+    });
+  });
+}
+
+function wireRatesDialog(): void {
+  const dialog = el("ratesDialog") as HTMLDialogElement;
+  (el("openRatesModal") as HTMLButtonElement).addEventListener("click", () => {
+    syncRatesUi();
+    buildRatesDialogFields();
+    if (!dialog.open) dialog.showModal();
+  });
+
+  (el("ratesDialogCancel") as HTMLButtonElement).addEventListener("click", () => {
+    dialog.close();
+  });
+
+  (el("ratesDialogOk") as HTMLButtonElement).addEventListener("click", () => {
+    try {
+      ratesDecimal = readRatesFromDialog();
+      (el("ratesSummary") as HTMLElement).textContent = formatRatesSummary(ratesDecimal);
+      dialog.close();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  });
+
+  dialog.addEventListener("click", (ev) => {
+    if (ev.target === dialog) dialog.close();
+  });
+}
+
+const onYearsChanged = (): void => {
+  syncRatesUi();
+};
+(el("years") as HTMLInputElement).addEventListener("change", onYearsChanged);
+(el("years") as HTMLInputElement).addEventListener("input", onYearsChanged);
+
 (el("calc") as HTMLButtonElement).addEventListener("click", run);
+
+wireNominalThousands();
+wireRatesDialog();
+syncRatesUi();
 run();

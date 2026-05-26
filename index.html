@@ -19,17 +19,27 @@
       <main class="card">
         <section class="form">
           <label class="field">
-            <span>总名义保费（元）</span>
-            <input id="nominal" type="number" min="0" step="any" value="1000000" />
+            <span>总名义保费（元）<span class="hint">（千位逗号随输入显示）</span></span>
+            <input
+              id="nominal"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              spellcheck="false"
+              value="1,000,000"
+            />
           </label>
           <label class="field">
             <span>原始分期年数 <span class="hint">（每年缴相同金额）</span></span>
             <input id="years" type="number" min="1" step="1" value="5" />
           </label>
-          <label class="field field--block">
-            <span>各年计息利率 <span class="hint">从第 1 个计息年度到第 (年数−1) 个，逗号或空格分隔；可填百分数如 5% 或小数 0.05</span></span>
-            <textarea id="rates" rows="3" placeholder="例：5%, 4%, 3.5%, 3%">5%, 4%, 3%, 2%</textarea>
-          </label>
+          <div class="field field--block">
+            <span>各年计息利率 <span class="hint">（共 <span id="ratesCountHint">4</span> 个，单位为每年百分比）</span></span>
+            <div class="ratesRow">
+              <p id="ratesSummary" class="ratesSummary">第 1 年 5% · 第 2 年 4% · 第 3 年 3% · 第 4 年 2%</p>
+              <button type="button" id="openRatesModal" class="btn btn--secondary">填写各年利率…</button>
+            </div>
+          </div>
           <button type="button" id="calc" class="btn">计算</button>
         </section>
 
@@ -57,6 +67,19 @@
         <p>算法说明：设每期保费为 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 中扣 <span class="mono">P</span>，余额按第 1 年利率滚存一年后扣 <span class="mono">P</span>，如此重复，共需 <span class="mono">年数 − 1</span> 个利率；最后一期末余额应等于 <span class="mono">P</span>。由此从末态倒推 <span class="mono">X</span>。</p>
       </footer>
     </div>
+
+    <dialog id="ratesDialog" class="dialog">
+      <div class="dialog__panel">
+        <h2 class="dialog__title">各年计息利率（%）</h2>
+        <p id="ratesDialogHint" class="dialog__hint"></p>
+        <div id="ratesDialogFields" class="dialog__fields"></div>
+        <div class="dialog__actions">
+          <button type="button" id="ratesDialogCancel" class="btn btn--ghost">取消</button>
+          <button type="button" id="ratesDialogOk" class="btn">确定</button>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

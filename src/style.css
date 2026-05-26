@@ -194,8 +194,103 @@ textarea {
   margin: 0;
 }
 
-.warn {
-  margin: 0.75rem 0 0;
-  font-size: 0.85rem;
+.ratesRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+.ratesSummary {
+  margin: 0;
+  font-size: 0.88rem;
   color: var(--muted);
+  line-height: 1.45;
+  max-width: 100%;
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.btn--secondary:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.btn--ghost:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.dialog {
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  max-width: calc(100vw - 2rem);
+  width: 22rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dialog__panel {
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.dialog__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.dialog__hint {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.dialog__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  max-height: min(50vh, 20rem);
+  overflow-y: auto;
+}
+
+.rateField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rateField label {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rateField input {
+  width: 100%;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
