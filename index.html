@@ -10,10 +10,6 @@
     <div class="app">
       <header class="header">
         <h1>预缴保费：实际一次性应交金额</h1>
-        <p class="subtitle">
-          按您描述的规则：每期等额扣款投入投资，账户余额按您给出的各年利率计息；倒推使最后一期末账户余额恰好等于最后一期应缴保费时的首期实付总额
-          <span class="mono">X</span>。
-        </p>
       </header>
 
       <main class="card">
@@ -54,6 +50,8 @@
             <dd id="outLump" class="highlight"></dd>
             <dt>相对名义总保费节省</dt>
             <dd id="outSave"></dd>
+            <dt>节省÷名义总保费÷年数</dt>
+            <dd id="outSavePerNominalPerYear"></dd>
           </dl>
           <p id="outWarn" class="warn" hidden></p>
           <details class="ledger">

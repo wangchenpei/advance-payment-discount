@@ -55,7 +55,10 @@ export function forwardLedger(
     const r = rates[i];
     B = B * (1 + r) - P;
     rows.push({
-      label: `第 ${i + 1} 年末（先按 ${(r * 100).toFixed(4)}% 计息再扣一期）`,
+      label: `第 ${i + 1} 年末（先按 ${(r * 100).toLocaleString("zh-CN", {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 0,
+      })}% 计息再扣一期）`,
       balance: B,
     });
   }
@@ -202,6 +205,13 @@ function readRatesFromDialog(): number[] {
   return out;
 }
 
+function formatLedgerInteger(n: number): string {
+  return Math.round(n).toLocaleString("zh-CN", {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  });
+}
+
 function run(): void {
   const err = el("error") as HTMLElement;
   const res = el("result") as HTMLElement;
@@ -226,6 +236,18 @@ function run(): void {
     (el("outLump") as HTMLElement).textContent = formatMoney(X);
     (el("outSave") as HTMLElement).textContent = formatMoney(save);
 
+    const savePerNominalPerYearEl = el("outSavePerNominalPerYear") as HTMLElement;
+    if (nominal <= 0 || !Number.isFinite(years) || years < 1) {
+      savePerNominalPerYearEl.textContent = "—";
+    } else {
+      const pct = (save / nominal / years) * 100;
+      savePerNominalPerYearEl.textContent =
+        pct.toLocaleString("zh-CN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + "%";
+    }
+
     const warn = el("outWarn") as HTMLElement;
     if (save < 0) {
       warn.hidden = false;
@@ -237,7 +259,7 @@ function run(): void {
     }
 
     const lines = ledger.map(
-      (r) => `${r.label}：${r.balance.toLocaleString("zh-CN", { maximumFractionDigits: 6 })}`,
+      (r) => `${r.label}：${formatLedgerInteger(r.balance)}`,
     );
     (el("outSteps") as HTMLElement).textContent = lines.join("\n");
 
