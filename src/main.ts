@@ -1,8 +1,8 @@
 /**
  * 名义总保费 total，分 n 年等额缴，每期 P = total/n。
- * 第 0 时刻从实缴 X 扣 P，余额按 r[0] 滚一年再扣 P，… 共 n-1 个利率；
- * 第 n-1 年末余额须等于 P（最后一期由账户支付）。
- * 倒推得 X。
+ * 第 0 时刻从实缴 X 扣 P；之后前 (n−2) 个计息年度：每年先按 r[k] 滚存一年再扣 P；
+ * 最后一个计息年度：仅按 r[n−2] 滚存一年，使期末余额**恰为** P（用于最后一期，不再从账户扣减 P）。
+ * 共 n−1 个利率。由此从末态倒推 X。
  */
 export function solveLumpSum(total: number, n: number, rates: number[]): number {
   if (!Number.isFinite(total) || total < 0) {
@@ -33,15 +33,16 @@ export function solveLumpSum(total: number, n: number, rates: number[]): number 
     }
   }
 
-  let B = P;
-  for (let k = rates.length - 1; k >= 0; k--) {
+  // 末态：B_{n-2}·(1+r_{n-1}) = P（最后一期只由滚存结果覆盖，不再执行「先息后扣 P」）
+  let B = P / (1 + rates[rates.length - 1]);
+  for (let k = rates.length - 2; k >= 0; k--) {
     const r = rates[k];
     B = (B + P) / (1 + r);
   }
   return B + P;
 }
 
-/** 正向验算：返回各年末余额（含初始扣款后） */
+/** 正向验算：各节点账户余额（与 solveLumpSum 末态约定一致） */
 export function forwardLedger(
   X: number,
   P: number,
@@ -51,7 +52,9 @@ export function forwardLedger(
   let B = X - P;
   rows.push({ label: "第 0 期扣款后账户余额", balance: B });
 
-  for (let i = 0; i < rates.length; i++) {
+  if (rates.length === 0) return rows;
+
+  for (let i = 0; i < rates.length - 1; i++) {
     const r = rates[i];
     B = B * (1 + r) - P;
     rows.push({
@@ -62,6 +65,15 @@ export function forwardLedger(
       balance: B,
     });
   }
+  const rLast = rates[rates.length - 1];
+  const finalBal = B * (1 + rLast);
+  rows.push({
+    label: `第 ${rates.length} 年末（先按 ${(rLast * 100).toLocaleString("zh-CN", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+    })}% 计息；余额恰为最后一期保费，不再扣减）`,
+    balance: finalBal,
+  });
   return rows;
 }
 

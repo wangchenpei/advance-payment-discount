@@ -62,7 +62,7 @@
       </main>
 
       <footer class="footer">
-        <p>算法说明：设每期保费为 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 中扣 <span class="mono">P</span>，余额按第 1 年利率滚存一年后扣 <span class="mono">P</span>，如此重复，共需 <span class="mono">年数 − 1</span> 个利率；最后一期末余额应等于 <span class="mono">P</span>。由此从末态倒推 <span class="mono">X</span>。</p>
+        <p>算法说明：每期保费 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣 <span class="mono">P</span>；之后前 <span class="mono">年数 − 2</span> 个计息年度均为「先按该年利率滚存一年，再扣一期 <span class="mono">P</span>」；最后一个计息年度<strong>只滚存、不再扣</strong> <span class="mono">P</span>，使期末余额<strong>恰好等于</strong>最后一期 <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。由此倒推 <span class="mono">X</span>。</p>
       </footer>
     </div>
 
