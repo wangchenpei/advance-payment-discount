@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>预缴保费节省计算器</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>预缴保费：实际一次性应交金额</h1>
+        <p class="subtitle">
+          按您描述的规则：每期等额扣款投入投资，账户余额按您给出的各年利率计息；倒推使最后一期末账户余额恰好等于最后一期应缴保费时的首期实付总额
+          <span class="mono">X</span>。
+        </p>
+      </header>
+
+      <main class="card">
+        <section class="form">
+          <label class="field">
+            <span>总名义保费（元）</span>
+            <input id="nominal" type="number" min="0" step="any" value="1000000" />
+          </label>
+          <label class="field">
+            <span>原始分期年数 <span class="hint">（每年缴相同金额）</span></span>
+            <input id="years" type="number" min="1" step="1" value="5" />
+          </label>
+          <label class="field field--block">
+            <span>各年计息利率 <span class="hint">从第 1 个计息年度到第 (年数−1) 个，逗号或空格分隔；可填百分数如 5% 或小数 0.05</span></span>
+            <textarea id="rates" rows="3" placeholder="例：5%, 4%, 3.5%, 3%">5%, 4%, 3%, 2%</textarea>
+          </label>
+          <button type="button" id="calc" class="btn">计算</button>
+        </section>
+
+        <section id="error" class="error" hidden></section>
+
+        <section id="result" class="result" hidden>
+          <h2>结果</h2>
+          <dl class="kv">
+            <dt>每期名义保费</dt>
+            <dd id="outInstallment"></dd>
+            <dt>客户实际一次性应交</dt>
+            <dd id="outLump" class="highlight"></dd>
+            <dt>相对名义总保费节省</dt>
+            <dd id="outSave"></dd>
+          </dl>
+          <p id="outWarn" class="warn" hidden></p>
+          <details class="ledger">
+            <summary>逐年账户推演（验算）</summary>
+            <div id="outSteps" class="steps"></div>
+          </details>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>算法说明：设每期保费为 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 中扣 <span class="mono">P</span>，余额按第 1 年利率滚存一年后扣 <span class="mono">P</span>，如此重复，共需 <span class="mono">年数 − 1</span> 个利率；最后一期末余额应等于 <span class="mono">P</span>。由此从末态倒推 <span class="mono">X</span>。</p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
