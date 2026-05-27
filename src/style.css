@@ -368,7 +368,7 @@ textarea {
   margin: 0;
 }
 
-/* 与 IRR and SI 项目一致的页脚（浏览器建议 + 格言），置于整页最下方 */
+/* 与 IRR and SI 项目一致的页脚（浏览器建议 + 格言），置于整页最下方；无底栏底色，仅分割线与文字 */
 footer.page-foot-note {
   box-sizing: border-box;
   width: 100%;
@@ -376,8 +376,7 @@ footer.page-foot-note {
   padding: 10px 1rem 16px;
   text-align: center;
   font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: transparent;
 }
 
 footer.page-foot-note .page-foot-divider {
