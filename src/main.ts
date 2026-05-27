@@ -77,11 +77,11 @@ export function forwardLedger(
   return rows;
 }
 
-function formatMoney(n: number): string {
+function formatYuanInteger(n: number): string {
   return (
-    n.toLocaleString("zh-CN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    Math.round(n).toLocaleString("zh-CN", {
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
     }) + " 元"
   );
 }
@@ -244,20 +244,19 @@ function run(): void {
     const save = nominal - X;
     const ledger = forwardLedger(X, P, rates);
 
-    (el("outInstallment") as HTMLElement).textContent = formatMoney(P);
-    (el("outLump") as HTMLElement).textContent = formatMoney(X);
-    (el("outSave") as HTMLElement).textContent = formatMoney(save);
+    (el("outInstallment") as HTMLElement).textContent = formatYuanInteger(P);
+    (el("outLump") as HTMLElement).textContent = formatYuanInteger(X);
+    (el("outSave") as HTMLElement).textContent = formatYuanInteger(save);
 
-    const savePerNominalPerYearEl = el("outSavePerNominalPerYear") as HTMLElement;
+    const prepayBonusEl = el("outPrepayBonus") as HTMLElement;
     if (nominal <= 0 || !Number.isFinite(years) || years < 1) {
-      savePerNominalPerYearEl.textContent = "—";
+      prepayBonusEl.textContent = "—";
     } else {
-      const pct = (save / nominal / years) * 100;
-      savePerNominalPerYearEl.textContent =
-        pct.toLocaleString("zh-CN", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) + "%";
+      const ratioPct = (save / nominal) * years * 100;
+      prepayBonusEl.textContent = `${Math.round(ratioPct).toLocaleString("zh-CN", {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      })}%`;
     }
 
     const warn = el("outWarn") as HTMLElement;

@@ -154,10 +154,27 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-.highlight {
-  font-size: 1.25rem;
+.prepay-bonus-box {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--ok);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.prepay-bonus-label {
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--ok);
+  letter-spacing: 0.02em;
+}
+
+.prepay-bonus-value {
+  margin-top: 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ok);
+  font-variant-numeric: tabular-nums;
 }
 
 .ledger {
