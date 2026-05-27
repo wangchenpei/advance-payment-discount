@@ -58,6 +58,13 @@
                 <button type="button" id="openRatesModal" class="btn btn--secondary">填写各年利率</button>
               </div>
             </div>
+            <div class="field field--block">
+              <span>官方折扣 <span class="hint">（按每期名义保费的百分比减免实缴，默认 0）</span></span>
+              <div class="ratesRow">
+                <p id="officialDiscountSummary" class="ratesSummary">当前：0%</p>
+                <button type="button" id="openOfficialDiscountModal" class="btn btn--secondary">填写官方折扣</button>
+              </div>
+            </div>
             <button type="button" id="calc" class="btn">计算</button>
           </section>
 
@@ -71,9 +78,11 @@
               <dt>总保费优惠</dt>
               <dd id="outSave"></dd>
             </dl>
-            <div class="prepay-bonus-box" aria-label="年化预缴优惠">
+            <div class="prepay-bonus-box" aria-label="预缴与官方优惠">
               <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonus" class="prepay-bonus-value"></div>
+              <div class="prepay-bonus-label prepay-bonus-label--secondary">官方优惠</div>
+              <div id="outOfficialBonusPct" class="prepay-bonus-value prepay-bonus-value--secondary"></div>
             </div>
             <p id="outWarn" class="warn" hidden></p>
             <details class="ledger" open>
@@ -110,6 +119,13 @@
                 <button type="button" id="openRatesModalRev" class="btn btn--secondary">填写各年利率</button>
               </div>
             </div>
+            <div class="field field--block">
+              <span>官方折扣 <span class="hint">（按每期名义保费的百分比减免实缴，默认 0）</span></span>
+              <div class="ratesRow">
+                <p id="officialDiscountSummaryRev" class="ratesSummary">当前：0%</p>
+                <button type="button" id="openOfficialDiscountModalRev" class="btn btn--secondary">填写官方折扣</button>
+              </div>
+            </div>
             <button type="button" id="calcReverse" class="btn">反向计算</button>
           </section>
 
@@ -123,9 +139,11 @@
               <dt>总保费优惠</dt>
               <dd id="outSaveRev"></dd>
             </dl>
-            <div class="prepay-bonus-box" aria-label="年化预缴优惠">
+            <div class="prepay-bonus-box" aria-label="预缴与官方优惠">
               <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonusRev" class="prepay-bonus-value"></div>
+              <div class="prepay-bonus-label prepay-bonus-label--secondary">官方优惠</div>
+              <div id="outOfficialBonusPctRev" class="prepay-bonus-value prepay-bonus-value--secondary"></div>
             </div>
             <p id="outWarnRev" class="warn" hidden></p>
             <details class="ledger" open>
@@ -141,8 +159,8 @@
           算法说明：每期保费 <span class="mono">P = 名义保费 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣
           <span class="mono">P</span>；之后前 <span class="mono">年数 − 2</span> 个计息年度均为「先按该年利率滚存一年，再扣一期
           <span class="mono">P</span>」；最后一个计息年度<strong>只滚存、不再扣</strong> <span class="mono">P</span>，使期末余额<strong>恰好等于</strong>最后一期
-          <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。正向与反向各自独立填写参数，数学约束相同：正向由名义保费求一次性实缴保费
-          <span class="mono">X</span>，反向由一次性实缴保费 <span class="mono">X</span> 求名义保费。
+          <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。<strong>官方折扣</strong>按「每期名义保费 × 折扣%」减免客户<strong>实缴</strong>金额，与计息预缴优惠<strong>叠加</strong>。
+          正向与反向各自独立填写参数：正向由名义保费求一次性实缴（含官方减免后），反向由实缴反解名义保费。
         </p>
       </footer>
     </div>
@@ -175,6 +193,58 @@
         <div class="dialog__actions">
           <button type="button" id="ratesDialogRevCancel" class="btn btn--ghost">取消</button>
           <button type="button" id="ratesDialogRevOk" class="btn">确定</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="officialDiscountDialog" class="dialog">
+      <div class="dialog__panel">
+        <h2 class="dialog__title">官方折扣 · 正向</h2>
+        <p class="dialog__hint">
+          减免金额 =（名义保费 ÷ 年数）× 折扣%。单位为百分数；填 0 表示无官方折扣。折扣过大可能导致实缴为非正数。
+        </p>
+        <div class="dialog__fields">
+          <div class="rateField">
+            <label for="officialDiscountInput">官方折扣（%）</label>
+            <input
+              id="officialDiscountInput"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              value="0"
+            />
+          </div>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" id="officialDiscountCancel" class="btn btn--ghost">取消</button>
+          <button type="button" id="officialDiscountOk" class="btn">确定</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="officialDiscountDialogRev" class="dialog">
+      <div class="dialog__panel">
+        <h2 class="dialog__title">官方折扣 · 反向</h2>
+        <p class="dialog__hint">
+          与正向相同：减免金额 =（名义保费 ÷ 年数）× 折扣%。单位为百分数；填 0 表示无官方折扣。
+        </p>
+        <div class="dialog__fields">
+          <div class="rateField">
+            <label for="officialDiscountInputRev">官方折扣（%）</label>
+            <input
+              id="officialDiscountInputRev"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              spellcheck="false"
+              value="0"
+            />
+          </div>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" id="officialDiscountRevCancel" class="btn btn--ghost">取消</button>
+          <button type="button" id="officialDiscountRevOk" class="btn">确定</button>
         </div>
       </div>
     </dialog>

@@ -197,6 +197,26 @@ function trimRatesToNeed(years: number, prev: number[]): number[] {
 
 let ratesDecimal: number[] = [];
 let ratesDecimalRev: number[] = [];
+let officialDiscountPct = 0;
+let officialDiscountPctRev = 0;
+
+function syncOfficialDiscountSummary(): void {
+  (el("officialDiscountSummary") as HTMLElement).textContent = `当前：${Math.round(officialDiscountPct)}%`;
+}
+
+function syncOfficialDiscountSummaryRev(): void {
+  (el("officialDiscountSummaryRev") as HTMLElement).textContent = `当前：${Math.round(officialDiscountPctRev)}%`;
+}
+
+function parseOfficialDiscountPercentInput(raw: string): number {
+  const t = raw.trim().replace(/%/u, "");
+  if (t === "") return 0;
+  const v = Number(t);
+  if (!Number.isFinite(v) || v < 0 || v > 100) {
+    throw new Error("官方折扣须在 0～100% 之间（可填 0），仅输入数字即可");
+  }
+  return v;
+}
 
 function parseYearsFromInput(): number {
   const raw = (el("years") as HTMLInputElement).value.trim();
@@ -420,27 +440,42 @@ function run(): void {
       );
     }
 
-    const X = solveLumpSum(nominal, years, rates);
+    const d = officialDiscountPct;
+    const X_int = solveLumpSum(nominal, years, rates);
     const P = nominal / years;
-    const save = nominal - X;
-    const ledger = forwardLedger(X, P, rates);
+    const offYuan = (d / 100) * P;
+    const X_pay = X_int - offYuan;
+    if (!Number.isFinite(X_pay) || (nominal > 0 && X_pay <= 0)) {
+      throw new Error(
+        "在当前名义保费与年数下，官方折扣过大，导致实缴为非正数；请降低官方折扣或核对输入。",
+      );
+    }
+    const saveInterest = nominal - X_int;
+    const saveTotal = nominal - X_pay;
+    const ledger = forwardLedger(X_int, P, rates);
 
-    (el("outLump") as HTMLElement).textContent = formatYuanInteger(X);
-    (el("outSave") as HTMLElement).textContent = formatYuanInteger(save);
+    (el("outLump") as HTMLElement).textContent = formatYuanInteger(X_pay);
+    (el("outSave") as HTMLElement).textContent = formatYuanInteger(saveTotal);
 
     const prepayBonusEl = el("outPrepayBonus") as HTMLElement;
+    const officialBonusEl = el("outOfficialBonusPct") as HTMLElement;
     if (nominal <= 0 || !Number.isFinite(years) || years < 1) {
       prepayBonusEl.textContent = "—";
+      officialBonusEl.textContent = "—";
     } else {
-      const ratioPct = (save / nominal) * years * 100;
+      const ratioPct = (saveInterest / nominal) * years * 100;
       prepayBonusEl.textContent = `${Math.round(ratioPct).toLocaleString("zh-CN", {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      })}%`;
+      officialBonusEl.textContent = `${Math.round(d).toLocaleString("zh-CN", {
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       })}%`;
     }
 
     const warn = el("outWarn") as HTMLElement;
-    if (save < 0) {
+    if (saveTotal < 0) {
       warn.hidden = false;
       warn.textContent =
         "提示：在当前利率与约束下，倒推出的一次性实缴保费高于名义保费。通常出现在各年利率过低或为 0 的情形；请核对利率与业务含义是否与您的合同一致。";
@@ -469,8 +504,9 @@ function runReverse(): void {
   err.textContent = "";
 
   try {
-    const X = parseNominalInput((el("lumpActual") as HTMLInputElement).value);
-    if (!Number.isFinite(X)) {
+    const d = officialDiscountPctRev;
+    const X_input = parseNominalInput((el("lumpActual") as HTMLInputElement).value);
+    if (!Number.isFinite(X_input)) {
       throw new Error("请填写客户实际一次性预缴（元），仅输入数字即可");
     }
     const years = parseYearsRevFromInput();
@@ -484,27 +520,55 @@ function runReverse(): void {
       );
     }
 
-    const nominal = solveNominalFromLump(X, years, rates);
+    let nominal: number;
+    if (years === 1) {
+      if (rates.length > 0) {
+        throw new Error("分 1 年交时不应再填写计息利率（无计息期）");
+      }
+      const denomOne = 1 - d / 100;
+      if (Math.abs(denomOne) < 1e-12) {
+        throw new Error("官方折扣为 100% 时无法反解名义保费；请降低折扣。");
+      }
+      nominal = X_input / denomOne;
+    } else {
+      const k = solveLumpSum(1, years, rates);
+      const denom = k - d / (100 * years);
+      if (!Number.isFinite(denom) || denom <= 1e-12) {
+        throw new Error(
+          "在当前年数、利率与官方折扣下无法反解名义保费（有效系数过小或为负）；请降低官方折扣或核对输入。",
+        );
+      }
+      nominal = X_input / denom;
+    }
+
+    const X_int = solveLumpSum(nominal, years, rates);
     const P = nominal / years;
-    const save = nominal - X;
-    const ledger = forwardLedger(X, P, rates);
+    const saveTotal = nominal - X_input;
+    const saveInterest = nominal - X_int;
+    const ledger = forwardLedger(X_int, P, rates);
 
     (el("outNominalRev") as HTMLElement).textContent = formatYuanInteger(nominal);
-    (el("outSaveRev") as HTMLElement).textContent = formatYuanInteger(save);
+    (el("outSaveRev") as HTMLElement).textContent = formatYuanInteger(saveTotal);
 
     const prepayBonusEl = el("outPrepayBonusRev") as HTMLElement;
+    const officialBonusEl = el("outOfficialBonusPctRev") as HTMLElement;
     if (nominal <= 0 || !Number.isFinite(years) || years < 1) {
       prepayBonusEl.textContent = "—";
+      officialBonusEl.textContent = "—";
     } else {
-      const ratioPct = (save / nominal) * years * 100;
+      const ratioPct = (saveInterest / nominal) * years * 100;
       prepayBonusEl.textContent = `${Math.round(ratioPct).toLocaleString("zh-CN", {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      })}%`;
+      officialBonusEl.textContent = `${Math.round(d).toLocaleString("zh-CN", {
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       })}%`;
     }
 
     const warn = el("outWarnRev") as HTMLElement;
-    if (save < 0) {
+    if (saveTotal < 0) {
       warn.hidden = false;
       warn.textContent =
         "提示：反解得到的名义保费低于一次性实缴保费（「总保费优惠」为负）。请核对实缴金额与右侧利率是否合理。";
@@ -602,6 +666,62 @@ function wireRatesDialogRev(): void {
   });
 }
 
+function wireOfficialDiscountDialog(): void {
+  const dialog = el("officialDiscountDialog") as HTMLDialogElement;
+  const input = el("officialDiscountInput") as HTMLInputElement;
+
+  (el("openOfficialDiscountModal") as HTMLButtonElement).addEventListener("click", () => {
+    input.value = String(officialDiscountPct);
+    if (!dialog.open) dialog.showModal();
+  });
+
+  (el("officialDiscountCancel") as HTMLButtonElement).addEventListener("click", () => {
+    dialog.close();
+  });
+
+  (el("officialDiscountOk") as HTMLButtonElement).addEventListener("click", () => {
+    try {
+      officialDiscountPct = parseOfficialDiscountPercentInput(input.value);
+      syncOfficialDiscountSummary();
+      dialog.close();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  });
+
+  dialog.addEventListener("click", (ev) => {
+    if (ev.target === dialog) dialog.close();
+  });
+}
+
+function wireOfficialDiscountDialogRev(): void {
+  const dialog = el("officialDiscountDialogRev") as HTMLDialogElement;
+  const input = el("officialDiscountInputRev") as HTMLInputElement;
+
+  (el("openOfficialDiscountModalRev") as HTMLButtonElement).addEventListener("click", () => {
+    input.value = String(officialDiscountPctRev);
+    if (!dialog.open) dialog.showModal();
+  });
+
+  (el("officialDiscountRevCancel") as HTMLButtonElement).addEventListener("click", () => {
+    dialog.close();
+  });
+
+  (el("officialDiscountRevOk") as HTMLButtonElement).addEventListener("click", () => {
+    try {
+      officialDiscountPctRev = parseOfficialDiscountPercentInput(input.value);
+      syncOfficialDiscountSummaryRev();
+      dialog.close();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  });
+
+  dialog.addEventListener("click", (ev) => {
+    if (ev.target === dialog) dialog.close();
+  });
+}
+
 const onYearsChanged = (): void => {
   syncRatesUi();
 };
@@ -620,5 +740,9 @@ wireCurrencyThousandInput("nominal");
 wireCurrencyThousandInput("lumpActual");
 wireRatesDialog();
 wireRatesDialogRev();
+wireOfficialDiscountDialog();
+wireOfficialDiscountDialogRev();
 syncRatesUi();
 syncRatesUiRev();
+syncOfficialDiscountSummary();
+syncOfficialDiscountSummaryRev();

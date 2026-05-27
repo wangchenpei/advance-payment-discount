@@ -340,6 +340,19 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
+.prepay-bonus-label--secondary {
+  margin-top: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+  opacity: 0.92;
+}
+
+.prepay-bonus-value--secondary {
+  margin-top: 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
 .ledger {
   margin-top: 1rem;
 }
