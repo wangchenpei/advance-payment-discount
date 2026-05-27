@@ -442,6 +442,7 @@ function wireCurrencyThousandInput(id: string): void {
   });
 }
 
+function wireRatesDialog(): void {
   const dialog = el("ratesDialog") as HTMLDialogElement;
   (el("openRatesModal") as HTMLButtonElement).addEventListener("click", () => {
     syncRatesUi();
