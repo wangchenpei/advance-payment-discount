@@ -304,8 +304,9 @@ function buildRatesDialogFields(): void {
     input.inputMode = "decimal";
     input.autocomplete = "off";
     input.spellcheck = false;
-    const r = ratesDecimal[i] ?? 0;
-    input.value = Number.isFinite(r) ? String(r * 100) : "";
+    const hasSaved = i < ratesDecimal.length;
+    const r = hasSaved ? ratesDecimal[i]! : Number.NaN;
+    input.value = hasSaved && Number.isFinite(r) ? String(r * 100) : "";
     wrap.append(label, input);
     container.appendChild(wrap);
   }
@@ -359,8 +360,9 @@ function buildRatesDialogFieldsRev(): void {
     input.inputMode = "decimal";
     input.autocomplete = "off";
     input.spellcheck = false;
-    const r = ratesDecimalRev[i] ?? 0;
-    input.value = Number.isFinite(r) ? String(r * 100) : "";
+    const hasSaved = i < ratesDecimalRev.length;
+    const r = hasSaved ? ratesDecimalRev[i]! : Number.NaN;
+    input.value = hasSaved && Number.isFinite(r) ? String(r * 100) : "";
     wrap.append(label, input);
     container.appendChild(wrap);
   }
