@@ -39,22 +39,78 @@ body {
 }
 
 .app {
+  position: relative;
   max-width: 58rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 1rem 1rem 3rem;
+}
+
+.author--corner {
+  position: fixed;
+  top: 0.65rem;
+  left: 0.65rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: min(46vw, 14rem);
+}
+
+.header--title {
+  text-align: center;
+  padding: 0.25rem 5.25rem 1rem;
+  margin: 0;
+}
+
+.header--title h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+  line-height: 1.3;
 }
 
 .dual-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1.25rem;
+  gap: 0;
   align-items: start;
-  margin-top: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.panel--forward {
+  padding-right: 1.25rem;
+  border-right: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.panel--reverse {
+  padding-left: 1.25rem;
 }
 
 @media (max-width: 52rem) {
   .dual-layout {
     grid-template-columns: 1fr;
+  }
+
+  .panel--forward {
+    padding-right: 0;
+    border-right: none;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  }
+
+  .panel--reverse {
+    padding-left: 0;
+    padding-top: 1.25rem;
+  }
+
+  .header--title {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 3.75rem;
+  }
+
+  .author--corner {
+    max-width: min(70vw, 14rem);
   }
 }
 
@@ -63,35 +119,6 @@ body {
   font-size: 1.05rem;
   font-weight: 650;
   line-height: 1.35;
-}
-
-.panel__hint {
-  margin: 0 0 1rem;
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem 1.25rem;
-}
-
-.header h1 {
-  flex: 1 1 14rem;
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 650;
-}
-
-.author {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.35rem 0;
 }
 
 .author__avatar {
@@ -232,6 +259,13 @@ textarea {
 .kv dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+}
+
+.kv dd.result-highlight {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ok);
+  letter-spacing: 0.01em;
 }
 
 .prepay-bonus-box {
