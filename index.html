@@ -30,10 +30,10 @@
 
       <main class="dual-layout">
         <section class="panel panel--forward card">
-          <h2 class="panel__title">正向：名义总保费 → 实缴一次性</h2>
+          <h2 class="panel__title">正向：名义保费 → 一次性实缴保费</h2>
           <section class="form">
             <label class="field">
-              <span>总名义保费（元）</span>
+              <span>名义保费（元）</span>
               <input
                 id="nominal"
                 type="text"
@@ -62,13 +62,13 @@
           <section id="result" class="result" hidden>
             <h3 class="result__title">计算结果</h3>
             <dl class="kv">
-              <dt>客户实际一次性预交</dt>
+              <dt>客户实际一次性预缴</dt>
               <dd id="outLump"></dd>
-              <dt>总保费节省</dt>
+              <dt>总保费优惠</dt>
               <dd id="outSave"></dd>
             </dl>
-            <div class="prepay-bonus-box" aria-label="预缴优惠">
-              <div class="prepay-bonus-label">预缴优惠</div>
+            <div class="prepay-bonus-box" aria-label="年化预缴优惠">
+              <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonus" class="prepay-bonus-value"></div>
             </div>
             <p id="outWarn" class="warn" hidden></p>
@@ -82,10 +82,10 @@
         <div class="dual-layout__divider" role="presentation" aria-hidden="true"></div>
 
         <section class="panel panel--reverse card">
-          <h2 class="panel__title">反向：实缴一次性 → 名义总保费</h2>
+          <h2 class="panel__title">反向：一次性实缴保费 → 名义保费</h2>
           <section class="form">
             <label class="field">
-              <span>客户实际一次性预交（元）</span>
+              <span>客户实际一次性预缴（元）</span>
               <input
                 id="lumpActual"
                 type="text"
@@ -114,13 +114,13 @@
           <section id="reverseResult" class="result" hidden>
             <h3 class="result__title">计算结果</h3>
             <dl class="kv">
-              <dt>名义总保费</dt>
+              <dt>名义保费</dt>
               <dd id="outNominalRev" class="result-highlight"></dd>
-              <dt>总保费节省</dt>
+              <dt>总保费优惠</dt>
               <dd id="outSaveRev"></dd>
             </dl>
-            <div class="prepay-bonus-box" aria-label="预缴优惠">
-              <div class="prepay-bonus-label">预缴优惠</div>
+            <div class="prepay-bonus-box" aria-label="年化预缴优惠">
+              <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonusRev" class="prepay-bonus-value"></div>
             </div>
             <p id="outWarnRev" class="warn" hidden></p>
@@ -134,11 +134,11 @@
 
       <footer class="footer">
         <p>
-          算法说明：每期保费 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣
+          算法说明：每期保费 <span class="mono">P = 名义保费 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣
           <span class="mono">P</span>；之后前 <span class="mono">年数 − 2</span> 个计息年度均为「先按该年利率滚存一年，再扣一期
           <span class="mono">P</span>」；最后一个计息年度<strong>只滚存、不再扣</strong> <span class="mono">P</span>，使期末余额<strong>恰好等于</strong>最后一期
-          <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。正向与反向各自独立填写参数，数学约束相同：正向由名义总保费求实缴
-          <span class="mono">X</span>，反向由实缴 <span class="mono">X</span> 求名义总保费。
+          <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。正向与反向各自独立填写参数，数学约束相同：正向由名义保费求一次性实缴保费
+          <span class="mono">X</span>，反向由一次性实缴保费 <span class="mono">X</span> 求名义保费。
         </p>
       </footer>
     </div>

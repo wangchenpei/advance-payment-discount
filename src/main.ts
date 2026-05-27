@@ -1,5 +1,5 @@
 /**
- * 名义总保费 total，分 n 年等额缴，每期 P = total/n。
+ * 名义保费 total，分 n 年等额缴，每期 P = total/n。
  * 第 0 时刻从实缴 X 扣 P；之后前 (n−2) 个计息年度：每年先按 r[k] 滚存一年再扣 P；
  * 最后一个计息年度：仅按 r[n−2] 滚存一年，使期末余额**恰为** P（用于最后一期，不再从账户扣减 P）。
  * 共 n−1 个利率。由此从末态倒推 X。
@@ -43,12 +43,12 @@ export function solveLumpSum(total: number, n: number, rates: number[]): number 
 }
 
 /**
- * 与 {@link solveLumpSum} 同一现金流：已知实缴一次性 X、年数 n、利率序列，
- * 反解名义总保费 T（每期名义保费 u = T/n）。
+ * 与 {@link solveLumpSum} 同一现金流：已知一次性实缴保费 X、年数 n、利率序列，
+ * 反解名义保费 T（每期名义保费 u = T/n）。
  */
 export function solveNominalFromLump(X: number, n: number, rates: number[]): number {
   if (!Number.isFinite(X) || X < 0) {
-    throw new Error("实际一次性预交须为非负有限数");
+    throw new Error("实际一次性预缴须为非负有限数");
   }
   if (!Number.isInteger(n) || n < 1) {
     throw new Error("年数须为不小于 1 的整数");
@@ -85,7 +85,7 @@ export function solveNominalFromLump(X: number, n: number, rates: number[]): num
   const rLast = rates[n - 2];
   const denom = 1 - cu * (1 + rLast);
   if (Math.abs(denom) < 1e-12) {
-    throw new Error("当前利率组合在数学上无法反解名义总保费，请调整利率或实缴金额");
+    throw new Error("当前利率组合在数学上无法反解名义保费，请调整利率或实缴金额");
   }
   const u = (ax * X * (1 + rLast)) / denom;
   if (!Number.isFinite(u) || u <= 0) {
@@ -407,7 +407,7 @@ function run(): void {
   try {
     const nominal = parseNominalInput((el("nominal") as HTMLInputElement).value);
     if (!Number.isFinite(nominal)) {
-      throw new Error("请填写总名义保费（元），仅输入数字即可");
+      throw new Error("请填写名义保费（元），仅输入数字即可");
     }
     const years = parseYearsFromInput();
     if (!Number.isFinite(years)) {
@@ -443,7 +443,7 @@ function run(): void {
     if (save < 0) {
       warn.hidden = false;
       warn.textContent =
-        "提示：在当前利率与约束下，倒推出的实缴一次性金额高于名义总保费。通常出现在各年利率过低或为 0 的情形；请核对利率与业务含义是否与您的合同一致。";
+        "提示：在当前利率与约束下，倒推出的一次性实缴保费高于名义保费。通常出现在各年利率过低或为 0 的情形；请核对利率与业务含义是否与您的合同一致。";
     } else {
       warn.hidden = true;
       warn.textContent = "";
@@ -471,7 +471,7 @@ function runReverse(): void {
   try {
     const X = parseNominalInput((el("lumpActual") as HTMLInputElement).value);
     if (!Number.isFinite(X)) {
-      throw new Error("请填写客户实际一次性预交（元），仅输入数字即可");
+      throw new Error("请填写客户实际一次性预缴（元），仅输入数字即可");
     }
     const years = parseYearsRevFromInput();
     if (!Number.isFinite(years)) {
@@ -507,7 +507,7 @@ function runReverse(): void {
     if (save < 0) {
       warn.hidden = false;
       warn.textContent =
-        "提示：反解得到的名义总保费低于实缴一次性金额（「节省」为负）。请核对实缴金额与右侧利率是否合理。";
+        "提示：反解得到的名义保费低于一次性实缴保费（「总保费优惠」为负）。请核对实缴金额与右侧利率是否合理。";
     } else {
       warn.hidden = true;
       warn.textContent = "";
