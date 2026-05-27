@@ -42,6 +42,58 @@ export function solveLumpSum(total: number, n: number, rates: number[]): number 
   return B + P;
 }
 
+/**
+ * 与 {@link solveLumpSum} 同一现金流：已知实缴一次性 X、年数 n、利率序列，
+ * 反解名义总保费 T（每期名义保费 u = T/n）。
+ */
+export function solveNominalFromLump(X: number, n: number, rates: number[]): number {
+  if (!Number.isFinite(X) || X < 0) {
+    throw new Error("实际一次性应交须为非负有限数");
+  }
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error("年数须为不小于 1 的整数");
+  }
+
+  if (n === 1) {
+    if (rates.length > 0) {
+      throw new Error("分 1 年交时不应再填写计息利率（无计息期）");
+    }
+    return X;
+  }
+
+  if (rates.length !== n - 1) {
+    throw new Error(
+      `分期年数为 ${n} 时，需要恰好 ${n - 1} 个年利率，当前为 ${rates.length} 个`,
+    );
+  }
+
+  for (let i = 0; i < rates.length; i++) {
+    const r = rates[i];
+    if (!Number.isFinite(r) || r <= -1) {
+      throw new Error(`第 ${i + 1} 个利率须为大于 -1 的有限数（当前为 ${r}）`);
+    }
+  }
+
+  // B_{n-2} = ax·X + cu·u，u = T/n；末态 (ax·X + cu·u)(1+r_last) = u
+  let ax = 1;
+  let cu = -1;
+  for (let i = 0; i < n - 2; i++) {
+    const r = rates[i];
+    ax *= 1 + r;
+    cu = cu * (1 + r) - 1;
+  }
+  const rLast = rates[n - 2];
+  const denom = 1 - cu * (1 + rLast);
+  if (Math.abs(denom) < 1e-12) {
+    throw new Error("当前利率组合在数学上无法反解名义总保费，请调整利率或实缴金额");
+  }
+  const u = (ax * X * (1 + rLast)) / denom;
+  if (!Number.isFinite(u) || u <= 0) {
+    throw new Error("反解结果无效，请检查实缴金额与左侧年数、利率是否合理");
+  }
+  return u * n;
+}
+
 /** 正向验算：各节点账户余额（与 solveLumpSum 末态约定一致） */
 export function forwardLedger(
   X: number,
@@ -311,22 +363,85 @@ function run(): void {
   }
 }
 
-function wireNominalThousands(): void {
-  const nominalInput = el("nominal") as HTMLInputElement;
-  nominalInput.addEventListener("input", () => {
-    const caret = nominalInput.selectionStart ?? nominalInput.value.length;
-    const digitCount = digitsBeforeCaret(nominalInput.value, caret);
-    const raw = parseDigitsOnly(nominalInput.value);
+function runReverse(): void {
+  const err = el("reverseError") as HTMLElement;
+  const res = el("reverseResult") as HTMLElement;
+  err.hidden = true;
+  res.hidden = true;
+  err.textContent = "";
+
+  try {
+    const X = parseNominalInput((el("lumpActual") as HTMLInputElement).value);
+    if (!Number.isFinite(X)) {
+      throw new Error("请填写客户实际一次性应交（元），仅输入数字即可");
+    }
+    const years = parseYearsFromInput();
+    if (!Number.isFinite(years)) {
+      throw new Error("请先在左侧填写原始分期年数（正整数）");
+    }
+    const rates = ratesDecimal;
+    if (years >= 2 && rates.length !== years - 1) {
+      throw new Error(
+        `分期年数为 ${years} 时，请先在左侧弹窗中填写全部 ${years - 1} 个年利率（当前已填 ${rates.length} 个）。`,
+      );
+    }
+
+    const nominal = solveNominalFromLump(X, years, rates);
+    const P = nominal / years;
+    const save = nominal - X;
+    const ledger = forwardLedger(X, P, rates);
+
+    (el("outNominalRev") as HTMLElement).textContent = formatYuanInteger(nominal);
+    (el("outSaveRev") as HTMLElement).textContent = formatYuanInteger(save);
+
+    const prepayBonusEl = el("outPrepayBonusRev") as HTMLElement;
+    if (nominal <= 0 || !Number.isFinite(years) || years < 1) {
+      prepayBonusEl.textContent = "—";
+    } else {
+      const ratioPct = (save / nominal) * years * 100;
+      prepayBonusEl.textContent = `${Math.round(ratioPct).toLocaleString("zh-CN", {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      })}%`;
+    }
+
+    const warn = el("outWarnRev") as HTMLElement;
+    if (save < 0) {
+      warn.hidden = false;
+      warn.textContent =
+        "提示：反解得到的名义总保费低于实缴一次性金额（「节省」为负）。请核对实缴金额与左侧利率是否合理。";
+    } else {
+      warn.hidden = true;
+      warn.textContent = "";
+    }
+
+    const lines = ledger.map(
+      (r) => `${r.label}：${formatLedgerInteger(r.balance)}`,
+    );
+    (el("outStepsRev") as HTMLElement).textContent = lines.join("\n");
+
+    res.hidden = false;
+  } catch (e) {
+    err.textContent = e instanceof Error ? e.message : String(e);
+    err.hidden = false;
+  }
+}
+
+function wireCurrencyThousandInput(id: string): void {
+  const input = el(id) as HTMLInputElement;
+  input.addEventListener("input", () => {
+    const caret = input.selectionStart ?? input.value.length;
+    const digitCount = digitsBeforeCaret(input.value, caret);
+    const raw = parseDigitsOnly(input.value);
     const formatted = formatIntegerCommas(raw);
-    nominalInput.value = formatted;
+    input.value = formatted;
     const newCaret = caretAfterDigits(formatted, digitCount);
     requestAnimationFrame(() => {
-      nominalInput.setSelectionRange(newCaret, newCaret);
+      input.setSelectionRange(newCaret, newCaret);
     });
   });
 }
 
-function wireRatesDialog(): void {
   const dialog = el("ratesDialog") as HTMLDialogElement;
   (el("openRatesModal") as HTMLButtonElement).addEventListener("click", () => {
     syncRatesUi();
@@ -364,7 +479,9 @@ const onYearsChanged = (): void => {
 (el("years") as HTMLInputElement).addEventListener("input", onYearsChanged);
 
 (el("calc") as HTMLButtonElement).addEventListener("click", run);
+(el("calcReverse") as HTMLButtonElement).addEventListener("click", runReverse);
 
-wireNominalThousands();
+wireCurrencyThousandInput("nominal");
+wireCurrencyThousandInput("lumpActual");
 wireRatesDialog();
 syncRatesUi();

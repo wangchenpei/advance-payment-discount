@@ -11,28 +11,14 @@
       <header class="header">
         <h1>预缴保费优惠计算器</h1>
         <aside class="author" aria-label="作者信息">
-          <!-- 头像对应 alpha-wang-avatar.png：内联 SVG，无需单独图片资源或上传到远程 -->
-          <div class="author__avatar" role="img" aria-label="Alpha Wang 头像">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="48" height="48" aria-hidden="true">
-              <defs>
-                <linearGradient id="aw-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#5ab0ff" />
-                  <stop offset="100%" stop-color="#156cc2" />
-                </linearGradient>
-              </defs>
-              <circle cx="48" cy="48" r="46" fill="url(#aw-grad)" />
-              <text
-                x="48"
-                y="58"
-                text-anchor="middle"
-                fill="#ffffff"
-                font-family="Segoe UI, system-ui, sans-serif"
-                font-size="26"
-                font-weight="700"
-              >
-                AW
-              </text>
-            </svg>
+          <div class="author__avatar">
+            <img
+              src="./alpha-wang-avatar.png"
+              alt="Alpha Wang 头像"
+              width="48"
+              height="48"
+              decoding="async"
+            />
           </div>
           <div class="author__meta">
             <p class="author__name">Alpha Wang</p>
@@ -41,57 +27,106 @@
         </aside>
       </header>
 
-      <main class="card">
-        <section class="form">
-          <label class="field">
-            <span>总名义保费（元）</span>
-            <input
-              id="nominal"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              spellcheck="false"
-              value=""
-            />
-          </label>
-          <label class="field">
-            <span>原始分期年数 <span class="hint">（每年缴相同金额）</span></span>
-            <input id="years" type="number" min="1" step="1" value="" />
-          </label>
-          <div class="field field--block">
-            <span>各年计息利率 <span class="hint">（共 <span id="ratesCountHint">—</span> 个，单位为每年百分比）</span></span>
-            <div class="ratesRow">
-              <p id="ratesSummary" class="ratesSummary">请先填写原始分期年数；再点击「填写各年利率」录入。</p>
-              <button type="button" id="openRatesModal" class="btn btn--secondary">填写各年利率…</button>
+      <main class="dual-layout">
+        <section class="panel panel--forward card">
+          <h2 class="panel__title">正向：名义总保费 → 实缴一次性</h2>
+          <section class="form">
+            <label class="field">
+              <span>总名义保费（元）</span>
+              <input
+                id="nominal"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                value=""
+              />
+            </label>
+            <label class="field">
+              <span>原始分期年数 <span class="hint">（每年缴相同金额）</span></span>
+              <input id="years" type="number" min="1" step="1" value="" />
+            </label>
+            <div class="field field--block">
+              <span>各年计息利率 <span class="hint">（共 <span id="ratesCountHint">—</span> 个，单位为每年百分比）</span></span>
+              <div class="ratesRow">
+                <p id="ratesSummary" class="ratesSummary">请先填写原始分期年数；再点击「填写各年利率」录入。</p>
+                <button type="button" id="openRatesModal" class="btn btn--secondary">填写各年利率…</button>
+              </div>
             </div>
-          </div>
-          <button type="button" id="calc" class="btn">计算</button>
+            <button type="button" id="calc" class="btn">计算</button>
+          </section>
+
+          <section id="error" class="error" hidden></section>
+
+          <section id="result" class="result" hidden>
+            <h3 class="result__title">结果</h3>
+            <dl class="kv">
+              <dt>客户实际一次性应交</dt>
+              <dd id="outLump"></dd>
+              <dt>总保费节省</dt>
+              <dd id="outSave"></dd>
+            </dl>
+            <div class="prepay-bonus-box" aria-label="预缴优惠">
+              <div class="prepay-bonus-label">预缴优惠</div>
+              <div id="outPrepayBonus" class="prepay-bonus-value"></div>
+            </div>
+            <p id="outWarn" class="warn" hidden></p>
+            <details class="ledger" open>
+              <summary>逐年账户推演（验算）</summary>
+              <div id="outSteps" class="steps"></div>
+            </details>
+          </section>
         </section>
 
-        <section id="error" class="error" hidden></section>
+        <section class="panel panel--reverse card">
+          <h2 class="panel__title">反向：实缴一次性 → 名义总保费</h2>
+          <p class="panel__hint">年数与各年利率与左侧相同；请先完成左侧填写。</p>
+          <section class="form">
+            <label class="field">
+              <span>客户实际一次性应交（元）</span>
+              <input
+                id="lumpActual"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                value=""
+              />
+            </label>
+            <button type="button" id="calcReverse" class="btn">反向计算</button>
+          </section>
 
-        <section id="result" class="result" hidden>
-          <h2>结果</h2>
-          <dl class="kv">
-            <dt>客户实际一次性应交</dt>
-            <dd id="outLump"></dd>
-            <dt>总保费节省</dt>
-            <dd id="outSave"></dd>
-          </dl>
-          <div class="prepay-bonus-box" aria-label="预缴优惠">
-            <div class="prepay-bonus-label">预缴优惠</div>
-            <div id="outPrepayBonus" class="prepay-bonus-value"></div>
-          </div>
-          <p id="outWarn" class="warn" hidden></p>
-          <details class="ledger" open>
-            <summary>逐年账户推演（验算）</summary>
-            <div id="outSteps" class="steps"></div>
-          </details>
+          <section id="reverseError" class="error" hidden></section>
+
+          <section id="reverseResult" class="result" hidden>
+            <h3 class="result__title">结果</h3>
+            <dl class="kv">
+              <dt>名义总保费</dt>
+              <dd id="outNominalRev"></dd>
+              <dt>总保费节省</dt>
+              <dd id="outSaveRev"></dd>
+            </dl>
+            <div class="prepay-bonus-box" aria-label="预缴优惠">
+              <div class="prepay-bonus-label">预缴优惠</div>
+              <div id="outPrepayBonusRev" class="prepay-bonus-value"></div>
+            </div>
+            <p id="outWarnRev" class="warn" hidden></p>
+            <details class="ledger" open>
+              <summary>逐年账户推演（验算）</summary>
+              <div id="outStepsRev" class="steps"></div>
+            </details>
+          </section>
         </section>
       </main>
 
       <footer class="footer">
-        <p>算法说明：每期保费 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣 <span class="mono">P</span>；之后前 <span class="mono">年数 − 2</span> 个计息年度均为「先按该年利率滚存一年，再扣一期 <span class="mono">P</span>」；最后一个计息年度<strong>只滚存、不再扣</strong> <span class="mono">P</span>，使期末余额<strong>恰好等于</strong>最后一期 <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。由此倒推 <span class="mono">X</span>。</p>
+        <p>
+          算法说明：每期保费 <span class="mono">P = 名义总额 / 年数</span>。第 0 期从实缴 <span class="mono">X</span> 扣
+          <span class="mono">P</span>；之后前 <span class="mono">年数 − 2</span> 个计息年度均为「先按该年利率滚存一年，再扣一期
+          <span class="mono">P</span>」；最后一个计息年度<strong>只滚存、不再扣</strong> <span class="mono">P</span>，使期末余额<strong>恰好等于</strong>最后一期
+          <span class="mono">P</span>。共 <span class="mono">年数 − 1</span> 个年利率。由此可由名义总保费倒推实缴 <span class="mono">X</span>（正向），或由实缴
+          <span class="mono">X</span> 反解名义总保费（反向，与正向同一约束）。
+        </p>
       </footer>
     </div>
 
