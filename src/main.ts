@@ -133,43 +133,63 @@ function formatPercentDisplay(r: number): string {
 }
 
 function formatRatesSummary(rates: number[]): string {
-  if (rates.length === 0) return "无需计息期";
+  if (rates.length === 0) return "（尚未填写利率）";
   return rates.map((r, i) => `第 ${i + 1} 年 ${formatPercentDisplay(r)}`).join(" · ");
 }
 
-function adjustRatesLength(years: number, prev: number[]): number[] {
+/** 将已保存的利率条数截断到当前年数所需长度，不自动补默认利率 */
+function trimRatesToNeed(years: number, prev: number[]): number[] {
   const need = Math.max(0, years - 1);
-  if (need === 0) return [];
-  const next = prev.slice(0, need);
-  while (next.length < need) {
-    const pad = next.length > 0 ? next[next.length - 1] : 0.05;
-    next.push(pad);
-  }
-  return next;
+  return prev.slice(0, need);
 }
 
-let ratesDecimal: number[] = [0.05, 0.04, 0.03, 0.02];
+let ratesDecimal: number[] = [];
+
+function parseYearsFromInput(): number {
+  const raw = (el("years") as HTMLInputElement).value.trim();
+  if (raw === "") return NaN;
+  const y = Math.round(Number(raw));
+  if (!Number.isFinite(y) || y < 1 || !Number.isInteger(y)) return NaN;
+  return y;
+}
 
 function syncRatesUi(): void {
-  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
-  ratesDecimal = adjustRatesLength(years, ratesDecimal);
-
-  const need = Math.max(0, years - 1);
-  (el("ratesCountHint") as HTMLElement).textContent = String(need);
-
+  const years = parseYearsFromInput();
   const summary = el("ratesSummary") as HTMLElement;
   const openBtn = el("openRatesModal") as HTMLButtonElement;
+  const hint = el("ratesCountHint") as HTMLElement;
+
+  if (!Number.isFinite(years)) {
+    ratesDecimal = [];
+    hint.textContent = "—";
+    summary.textContent = "请先填写原始分期年数（正整数）。";
+    openBtn.disabled = true;
+    return;
+  }
+
+  ratesDecimal = trimRatesToNeed(years, ratesDecimal);
+  const need = Math.max(0, years - 1);
+  hint.textContent = String(need);
+
   if (years <= 1) {
     summary.textContent = "分 1 年交：无中间计息期，无需填写利率。";
     openBtn.disabled = true;
+    return;
+  }
+
+  openBtn.disabled = false;
+  if (ratesDecimal.length < need) {
+    summary.textContent = `请在弹窗中填写全部 ${need} 个计息年度利率（当前已填 ${ratesDecimal.length} 个）。`;
   } else {
     summary.textContent = formatRatesSummary(ratesDecimal);
-    openBtn.disabled = false;
   }
 }
 
 function buildRatesDialogFields(): void {
-  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
+  const years = parseYearsFromInput();
+  if (!Number.isFinite(years)) {
+    throw new Error("请先填写原始分期年数（正整数）。");
+  }
   const need = Math.max(0, years - 1);
   const container = el("ratesDialogFields") as HTMLElement;
   container.innerHTML = "";
@@ -199,7 +219,10 @@ function buildRatesDialogFields(): void {
 }
 
 function readRatesFromDialog(): number[] {
-  const years = Math.round(Number((el("years") as HTMLInputElement).value)) || 1;
+  const years = parseYearsFromInput();
+  if (!Number.isFinite(years)) {
+    throw new Error("请先填写原始分期年数（正整数）。");
+  }
   const need = Math.max(0, years - 1);
   const out: number[] = [];
   for (let i = 0; i < need; i++) {
@@ -236,15 +259,22 @@ function run(): void {
     if (!Number.isFinite(nominal)) {
       throw new Error("请填写总名义保费（元），仅输入数字即可");
     }
-    const years = Math.round(Number((el("years") as HTMLInputElement).value));
+    const years = parseYearsFromInput();
+    if (!Number.isFinite(years)) {
+      throw new Error("请填写原始分期年数（正整数）");
+    }
     const rates = ratesDecimal;
+    if (years >= 2 && rates.length !== years - 1) {
+      throw new Error(
+        `分期年数为 ${years} 时，请在弹窗中填写全部 ${years - 1} 个年利率（当前已填 ${rates.length} 个）。`,
+      );
+    }
 
     const X = solveLumpSum(nominal, years, rates);
     const P = nominal / years;
     const save = nominal - X;
     const ledger = forwardLedger(X, P, rates);
 
-    (el("outInstallment") as HTMLElement).textContent = formatYuanInteger(P);
     (el("outLump") as HTMLElement).textContent = formatYuanInteger(X);
     (el("outSave") as HTMLElement).textContent = formatYuanInteger(save);
 
@@ -300,8 +330,12 @@ function wireRatesDialog(): void {
   const dialog = el("ratesDialog") as HTMLDialogElement;
   (el("openRatesModal") as HTMLButtonElement).addEventListener("click", () => {
     syncRatesUi();
-    buildRatesDialogFields();
-    if (!dialog.open) dialog.showModal();
+    try {
+      buildRatesDialogFields();
+      if (!dialog.open) dialog.showModal();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
   });
 
   (el("ratesDialogCancel") as HTMLButtonElement).addEventListener("click", () => {
@@ -334,4 +368,3 @@ const onYearsChanged = (): void => {
 wireNominalThousands();
 wireRatesDialog();
 syncRatesUi();
-run();
