@@ -198,14 +198,20 @@ function trimRatesToNeed(years: number, prev: number[]): number[] {
 let ratesDecimal: number[] = [];
 let ratesDecimalRev: number[] = [];
 let officialDiscountPct = 0;
+let officialDiscountSaved = false;
 let officialDiscountPctRev = 0;
+let officialDiscountSavedRev = false;
 
 function syncOfficialDiscountSummary(): void {
-  (el("officialDiscountSummary") as HTMLElement).textContent = `当前：${Math.round(officialDiscountPct)}%`;
+  (el("officialDiscountSummary") as HTMLElement).textContent = officialDiscountSaved
+    ? `当前：${Math.round(officialDiscountPct)}%`
+    : "当前：—";
 }
 
 function syncOfficialDiscountSummaryRev(): void {
-  (el("officialDiscountSummaryRev") as HTMLElement).textContent = `当前：${Math.round(officialDiscountPctRev)}%`;
+  (el("officialDiscountSummaryRev") as HTMLElement).textContent = officialDiscountSavedRev
+    ? `当前：${Math.round(officialDiscountPctRev)}%`
+    : "当前：—";
 }
 
 function parseOfficialDiscountPercentInput(raw: string): number {
@@ -213,7 +219,7 @@ function parseOfficialDiscountPercentInput(raw: string): number {
   if (t === "") return 0;
   const v = Number(t);
   if (!Number.isFinite(v) || v < 0 || v > 100) {
-    throw new Error("官方折扣须在 0～100% 之间（可填 0），仅输入数字即可");
+    throw new Error("官方折扣须在 0～100% 之间，留空视为 0；仅输入数字即可");
   }
   return v;
 }
@@ -671,7 +677,7 @@ function wireOfficialDiscountDialog(): void {
   const input = el("officialDiscountInput") as HTMLInputElement;
 
   (el("openOfficialDiscountModal") as HTMLButtonElement).addEventListener("click", () => {
-    input.value = String(officialDiscountPct);
+    input.value = officialDiscountSaved ? String(officialDiscountPct) : "";
     if (!dialog.open) dialog.showModal();
   });
 
@@ -682,6 +688,7 @@ function wireOfficialDiscountDialog(): void {
   (el("officialDiscountOk") as HTMLButtonElement).addEventListener("click", () => {
     try {
       officialDiscountPct = parseOfficialDiscountPercentInput(input.value);
+      officialDiscountSaved = true;
       syncOfficialDiscountSummary();
       dialog.close();
     } catch (e) {
@@ -699,7 +706,7 @@ function wireOfficialDiscountDialogRev(): void {
   const input = el("officialDiscountInputRev") as HTMLInputElement;
 
   (el("openOfficialDiscountModalRev") as HTMLButtonElement).addEventListener("click", () => {
-    input.value = String(officialDiscountPctRev);
+    input.value = officialDiscountSavedRev ? String(officialDiscountPctRev) : "";
     if (!dialog.open) dialog.showModal();
   });
 
@@ -710,6 +717,7 @@ function wireOfficialDiscountDialogRev(): void {
   (el("officialDiscountRevOk") as HTMLButtonElement).addEventListener("click", () => {
     try {
       officialDiscountPctRev = parseOfficialDiscountPercentInput(input.value);
+      officialDiscountSavedRev = true;
       syncOfficialDiscountSummaryRev();
       dialog.close();
     } catch (e) {

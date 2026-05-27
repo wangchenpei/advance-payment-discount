@@ -59,9 +59,9 @@
               </div>
             </div>
             <div class="field field--block">
-              <span>官方折扣 <span class="hint">（按每期名义保费的百分比减免实缴，默认 0）</span></span>
+              <span>官方折扣</span>
               <div class="ratesRow">
-                <p id="officialDiscountSummary" class="ratesSummary">当前：0%</p>
+                <p id="officialDiscountSummary" class="ratesSummary">当前：—</p>
                 <button type="button" id="openOfficialDiscountModal" class="btn btn--secondary">填写官方折扣</button>
               </div>
             </div>
@@ -81,8 +81,8 @@
             <div class="prepay-bonus-box" aria-label="预缴与官方优惠">
               <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonus" class="prepay-bonus-value"></div>
-              <div class="prepay-bonus-label prepay-bonus-label--secondary">官方优惠</div>
-              <div id="outOfficialBonusPct" class="prepay-bonus-value prepay-bonus-value--secondary"></div>
+              <div class="prepay-bonus-label">官方优惠</div>
+              <div id="outOfficialBonusPct" class="prepay-bonus-value"></div>
             </div>
             <p id="outWarn" class="warn" hidden></p>
             <details class="ledger" open>
@@ -120,9 +120,9 @@
               </div>
             </div>
             <div class="field field--block">
-              <span>官方折扣 <span class="hint">（按每期名义保费的百分比减免实缴，默认 0）</span></span>
+              <span>官方折扣</span>
               <div class="ratesRow">
-                <p id="officialDiscountSummaryRev" class="ratesSummary">当前：0%</p>
+                <p id="officialDiscountSummaryRev" class="ratesSummary">当前：—</p>
                 <button type="button" id="openOfficialDiscountModalRev" class="btn btn--secondary">填写官方折扣</button>
               </div>
             </div>
@@ -142,8 +142,8 @@
             <div class="prepay-bonus-box" aria-label="预缴与官方优惠">
               <div class="prepay-bonus-label">年化预缴优惠</div>
               <div id="outPrepayBonusRev" class="prepay-bonus-value"></div>
-              <div class="prepay-bonus-label prepay-bonus-label--secondary">官方优惠</div>
-              <div id="outOfficialBonusPctRev" class="prepay-bonus-value prepay-bonus-value--secondary"></div>
+              <div class="prepay-bonus-label">官方优惠</div>
+              <div id="outOfficialBonusPctRev" class="prepay-bonus-value"></div>
             </div>
             <p id="outWarnRev" class="warn" hidden></p>
             <details class="ledger" open>
@@ -200,9 +200,6 @@
     <dialog id="officialDiscountDialog" class="dialog">
       <div class="dialog__panel">
         <h2 class="dialog__title">官方折扣 · 正向</h2>
-        <p class="dialog__hint">
-          减免金额 =（名义保费 ÷ 年数）× 折扣%。单位为百分数；填 0 表示无官方折扣。折扣过大可能导致实缴为非正数。
-        </p>
         <div class="dialog__fields">
           <div class="rateField">
             <label for="officialDiscountInput">官方折扣（%）</label>
@@ -212,7 +209,7 @@
               inputmode="decimal"
               autocomplete="off"
               spellcheck="false"
-              value="0"
+              value=""
             />
           </div>
         </div>
@@ -226,9 +223,6 @@
     <dialog id="officialDiscountDialogRev" class="dialog">
       <div class="dialog__panel">
         <h2 class="dialog__title">官方折扣 · 反向</h2>
-        <p class="dialog__hint">
-          与正向相同：减免金额 =（名义保费 ÷ 年数）× 折扣%。单位为百分数；填 0 表示无官方折扣。
-        </p>
         <div class="dialog__fields">
           <div class="rateField">
             <label for="officialDiscountInputRev">官方折扣（%）</label>
@@ -238,7 +232,7 @@
               inputmode="decimal"
               autocomplete="off"
               spellcheck="false"
-              value="0"
+              value=""
             />
           </div>
         </div>
