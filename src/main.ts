@@ -48,7 +48,7 @@ export function solveLumpSum(total: number, n: number, rates: number[]): number 
  */
 export function solveNominalFromLump(X: number, n: number, rates: number[]): number {
   if (!Number.isFinite(X) || X < 0) {
-    throw new Error("实际一次性应交须为非负有限数");
+    throw new Error("实际一次性预交须为非负有限数");
   }
   if (!Number.isInteger(n) || n < 1) {
     throw new Error("年数须为不小于 1 的整数");
@@ -471,7 +471,7 @@ function runReverse(): void {
   try {
     const X = parseNominalInput((el("lumpActual") as HTMLInputElement).value);
     if (!Number.isFinite(X)) {
-      throw new Error("请填写客户实际一次性应交（元），仅输入数字即可");
+      throw new Error("请填写客户实际一次性预交（元），仅输入数字即可");
     }
     const years = parseYearsRevFromInput();
     if (!Number.isFinite(years)) {
